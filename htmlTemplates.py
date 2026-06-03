@@ -1,8 +1,8 @@
 css = '''
 <style>
-#MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-header {visibility: hidden;}
+/* Hide only the Clear Cache option from menu */
+[data-testid="stMainMenu"] ul li:last-child {display: none;}
 
 /* Push main content up so fixed bar doesn't cover it */
 .main .block-container {

@@ -19,28 +19,22 @@ from database import (
 load_dotenv()
 init_db()
 
-
-# ── Core functions (unchanged) ────────────────────────────────────────────────
-
 def get_pdf_text_from_bytes(pdf_bytes):
     text = ""
-    reader = PdfReader(io.BytesIO(pdf_bytes))
+    reader =  PdfReader(io.BytesIO(pdf_bytes))
     for page in reader.pages:
         text += page.extract_text() or ""
     return text
 
-
 def get_page_count_from_bytes(pdf_bytes):
     reader = PdfReader(io.BytesIO(pdf_bytes))
     return len(reader.pages)
-
 
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
         separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
     )
     return text_splitter.split_text(text)
-
 
 def get_vectorstore(text_chunks):
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -58,7 +52,6 @@ def get_conversation_chain(vectorstore):
         llm=llm, retriever=vectorstore.as_retriever(), memory=memory
     )
 
-
 def handle_userinput(user_question):
     response = st.session_state.conversation({'question': user_question})
     st.session_state.chat_history = response['chat_history']
@@ -72,7 +65,6 @@ def handle_userinput(user_question):
             if i == len(st.session_state.chat_history) - 1:
                 save_message(st.session_state.user_id, "assistant", message.content)
 
-
 def generate_summary(text):
     from groq import Groq as GroqClient
     client = GroqClient(api_key=os.getenv("GROQ_API_KEY"))
@@ -84,9 +76,6 @@ def generate_summary(text):
         max_tokens=300
     )
     return response.choices[0].message.content
-
-
-# ── Auth Page ─────────────────────────────────────────────────────────────────
 
 def show_auth_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
@@ -119,7 +108,7 @@ def show_auth_page():
             if st.button("Create Account", use_container_width=True, type="primary"):
                 if new_user and new_pass and new_pass2:
                     if new_pass != new_pass2:
-                        st.error("Passwords don't match.")
+                        st.error("Passwords do not match.")
                     else:
                         ok, msg = register_user(new_user, new_pass)
                         if ok:
@@ -129,15 +118,11 @@ def show_auth_page():
                 else:
                     st.warning("Please fill in all fields.")
 
-
-# ── Main App ──────────────────────────────────────────────────────────────────
-
 def main():
     load_dotenv()
     st.set_page_config(page_title="Chat with multiple PDFs", page_icon="📚", layout="wide")
     st.write(css, unsafe_allow_html=True)
 
-    # Session state init
     for key, val in {
         "logged_in": False, "user_id": None, "username": None,
         "conversation": None, "chat_history": None, "input_key": 0
@@ -149,7 +134,6 @@ def main():
         show_auth_page()
         return
 
-    # ── Header ────────────────────────────────────────────────────────────────
     col1, col2 = st.columns([4, 1])
     with col1:
         st.markdown("# 📚 Chat with Multiple PDFs")
@@ -163,7 +147,6 @@ def main():
 
     st.markdown("---")
 
-    # ── Chat history display ──────────────────────────────────────────────────
     if st.session_state.chat_history:
         st.markdown('<div class="chat-container">', unsafe_allow_html=True)
         for i, message in enumerate(st.session_state.chat_history):
@@ -178,7 +161,6 @@ def main():
         else:
             st.info("👈 Upload PDFs from the sidebar, save them to your library, then select and process them to start chatting.")
 
-    # ── Fixed bottom input bar ────────────────────────────────────────────────
     input_container = st.container()
     with input_container:
         col_input, col_btn = st.columns([5, 1])
@@ -203,7 +185,6 @@ def main():
             st.session_state.input_key += 1
             st.rerun()
 
-    # JS to move input bar to bottom of page
     st.markdown("""
     <script>
     function moveInputToBottom() {
@@ -225,7 +206,6 @@ def main():
     </script>
     """, unsafe_allow_html=True)
 
-    # ── Sidebar ───────────────────────────────────────────────────────────────
     with st.sidebar:
         st.markdown("## 📤 Add New PDFs")
         st.caption("Upload PDFs here to save them permanently to your library")

@@ -39,8 +39,6 @@ def init_db():
     conn.close()
 
 
-# ── Auth ──────────────────────────────────────────────────────────────────────
-
 def register_user(username, password):
     if len(username.strip()) < 3:
         return False, "Username must be at least 3 characters."
@@ -78,8 +76,6 @@ def get_username(user_id):
     conn.close()
     return row[0] if row else "Unknown"
 
-
-# ── PDF Library ───────────────────────────────────────────────────────────────
 
 def save_pdf(user_id, uploaded_file, page_count=0, summary=""):
     file_bytes = uploaded_file.getvalue()
