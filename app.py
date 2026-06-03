@@ -67,15 +67,70 @@ def handle_userinput(user_question):
 
 def generate_summary(text):
     from groq import Groq as GroqClient
+
     client = GroqClient(api_key=os.getenv("GROQ_API_KEY"))
-    snippet = text[:4000]
-    response = client.chat.completions.create(
+
+    chunks = get_text_chunks(text)[:20]
+
+    chunk_summaries = []
+
+    for chunk in chunks:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Summarize this part of the document in 2-3 sentences:\n\n{chunk}"
+                }
+            ],
+            max_tokens=250
+        )
+
+        chunk_summaries.append(response.choices[0].message.content)
+
+    combined_summary = "\n\n".join(chunk_summaries)
+
+    final_response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
-        messages=[{"role": "user",
-                   "content": f"Give a concise 3-4 sentence summary of this document:\n\n{snippet}"}],
-        max_tokens=300
+        messages=[
+            {
+                "role": "user",
+                "content": f"""
+You are an expert document analyst.
+
+Your task is not to give a generic summary. Analyze the document deeply and generate a useful, structured, high-value summary.
+
+Follow this format:
+
+1. Main Idea:
+Explain the central purpose of the document in simple words.
+
+2. Key Points:
+List the most important points, arguments, facts, or findings from the document.
+
+3. Important Details:
+Mention any names, dates, numbers, definitions, processes, examples, or conclusions that are important.
+
+4. Final Summary:
+Give a polished 3-4 sentence summary that captures the overall document clearly.
+
+Rules:
+- Do not add information that is not present in the document.
+- Do not make the summary vague or generic.
+- Use simple, clear language.
+- Preserve important technical terms if they appear in the document.
+- If the document is academic, explain it like study notes.
+- If the document is business-related, explain it like an executive brief.
+- If the document is legal or formal, explain the obligations, risks, and important clauses clearly.
+
+Document text:
+{combined_summary}
+"""
+            }
+        ],
     )
-    return response.choices[0].message.content
+
+    return final_response.choices[0].message.content
 
 def show_auth_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
